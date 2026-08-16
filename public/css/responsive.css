@@ -28,6 +28,10 @@ html, body { overscroll-behavior: none; }
 }
 #intro { padding-bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); }
 #toast { bottom: calc(36px + env(safe-area-inset-bottom, 0px)); }
+#dev-link {
+  right: calc(18px + env(safe-area-inset-right, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
 
 /* ---- short viewports (laptops, landscape phones) ----
    Compress the write form so the buttons stay on screen
@@ -62,6 +66,11 @@ html, body { overscroll-behavior: none; }
     gap: 6px;
   }
   .memory-paper::after { width: 34px; height: 34px; right: 16px; bottom: 14px; }
+  #dev-link {
+    font-size: .74rem; padding: 6px 11px;
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ---- tiny landscape (phone rotated) ----

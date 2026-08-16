@@ -305,6 +305,27 @@ html, body {
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* developer badge */
+#dev-link {
+  position: fixed; right: 18px; bottom: 14px; z-index: 10;
+  font-size: .82rem; letter-spacing: .06em;
+  color: #cfd8e0; text-decoration: none;
+  padding: 7px 14px; border-radius: 20px;
+  background: rgba(6, 12, 24, .55);
+  border: 1px solid rgba(216, 180, 90, .3);
+  backdrop-filter: blur(3px);
+  opacity: .6;
+  transition: opacity .25s ease, box-shadow .25s ease,
+              border-color .25s ease, color .25s ease, transform .25s ease;
+}
+#dev-link:hover {
+  opacity: 1;
+  color: var(--gold-bright);
+  border-color: rgba(216, 180, 90, .7);
+  box-shadow: 0 0 18px rgba(216, 180, 90, .35);
+  transform: translateY(-2px);
+}
+
 /* enchanted scrollbars: a polished gold-and-wood thumb in a parchment groove */
 .parchment::-webkit-scrollbar,
 .parchment textarea::-webkit-scrollbar { width: 10px; }
