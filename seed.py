@@ -1,4 +1,11 @@
-"""Seed an empty database with starter memories."""
+"""Seed an empty database with starter memories.
+
+Usage:
+    python seed.py           # only fills a completely empty database
+    python seed.py --merge   # adds the stories missing from a non-empty one
+"""
+import sys
+
 from server import create_app, db
 
 SEED = [
@@ -126,14 +133,19 @@ SEED = [
 
 
 def main():
+    merge = "--merge" in sys.argv
     app = create_app()
     with app.app_context():
-        if db.count_memories() > 0:
-            print("База вже не порожня — сід пропущено.")
+        if db.count_memories() > 0 and not merge:
+            print("База вже не порожня — сід пропущено (додай --merge, щоб докинути відсутні історії).")
             return
+        existing = {row["title"] for row in db.list_memories()} if merge else set()
+        added = 0
         for author, title, body in SEED:
-            db.add_memory(author, title, body)
-        print(f"Додано {len(SEED)} стартових спогадів.")
+            if title not in existing:
+                db.add_memory(author, title, body)
+                added += 1
+        print(f"Додано {added} спогадів, всього в базі: {db.count_memories()}.")
 
 
 if __name__ == "__main__":
