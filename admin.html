@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Омут пам'яті — адмінка</title>
+  <style>
+    :root {
+      --gold: #d8b45a;
+      --gold-bright: #f3d488;
+      --ink: #2c2317;
+      --paper: #f0e3c0;
+      --wax: #8e2b1d;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #0b1526 0%, #060a14 70%);
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #e8e2d0;
+      padding: 32px 16px 64px;
+    }
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 {
+      color: var(--gold-bright);
+      font-weight: normal;
+      letter-spacing: .1em;
+      font-size: 1.7rem;
+      text-shadow: 0 0 18px rgba(159, 232, 255, .35);
+    }
+    header a { color: #7fa8c2; font-size: .9rem; }
+    #count { color: #7fa8c2; font-style: italic; margin-top: 8px; }
+    #status { text-align: center; color: #7fa8c2; font-style: italic; }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .memory {
+      background:
+        radial-gradient(ellipse at 20% 10%, rgba(120, 90, 40, .12), transparent 55%),
+        var(--paper);
+      color: var(--ink);
+      border: 1px solid #b09a62;
+      border-radius: 6px 12px 8px 14px;
+      padding: 18px 22px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .55);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .memory.removing { opacity: 0; transform: translateX(40px); }
+    .memory .meta {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 12px; flex-wrap: wrap;
+      color: #8d764c; font-size: .85rem; margin-bottom: 6px;
+    }
+    .memory h2 { color: #4a3410; font-size: 1.15rem; margin-bottom: 8px; }
+    .memory .body {
+      line-height: 1.6; white-space: pre-wrap;
+      border-top: 1px dashed #b6a068; padding-top: 8px;
+    }
+    .memory .actions { text-align: right; margin-top: 12px; }
+    .delete-btn {
+      font-family: inherit; font-size: .9rem;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      color: #f5ded8;
+      background: linear-gradient(180deg, #a83a28, #6b1f12);
+      border: 1px solid #4a130a;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .delete-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(168, 58, 40, .45); }
+    .delete-btn:disabled { opacity: .5; cursor: default; }
+    #login {
+      max-width: 360px; margin: 8vh auto 0;
+      background:
+        radial-gradient(ellipse at 20% 10%, rgba(120, 90, 40, .12), transparent 55%),
+        var(--paper);
+      color: var(--ink);
+      border: 1px solid #b09a62;
+      border-radius: 6px 12px 8px 14px;
+      padding: 26px 28px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .55);
+      text-align: center;
+    }
+    #login h2 { color: #4a3410; font-size: 1.1rem; margin-bottom: 14px; }
+    #login input {
+      width: 100%; padding: 10px 12px; margin-bottom: 12px;
+      font-family: inherit; font-size: 1rem; color: var(--ink);
+      background: rgba(255, 252, 240, .65);
+      border: 1px solid #b6a068; border-radius: 6px;
+    }
+    #login input:focus { outline: none; border-color: #7d6023; box-shadow: 0 0 0 3px rgba(216, 180, 90, .3); }
+    #login button {
+      font-family: inherit; font-size: 1rem;
+      padding: 10px 26px; border-radius: 8px; cursor: pointer;
+      background: linear-gradient(180deg, #e8c76e, #a9822f);
+      border: 1px solid #6d5314; color: #241a05;
+    }
+    #login-error { color: var(--wax); min-height: 1.2em; font-size: .9rem; margin-top: 10px; }
+    #logout-btn {
+      background: none; border: none; cursor: pointer;
+      color: #7fa8c2; font-family: inherit; font-size: .9rem;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Омут пам'яті — спогади</h1>
+    <p id="count"></p>
+    <p><a href="/">← до Омуту</a> <button id="logout-btn" hidden>вийти</button></p>
+  </header>
+
+  <section id="login" hidden>
+    <form id="login-form">
+      <h2>Вхід до адмінки</h2>
+      <input id="password" type="password" placeholder="Пароль" autocomplete="current-password" required>
+      <button type="submit">Увійти</button>
+      <p id="login-error"></p>
+    </form>
+  </section>
+
+  <p id="status">Завантаження…</p>
+  <main id="list"></main>
+
+  <script>
+    const list = document.getElementById('list');
+    const count = document.getElementById('count');
+    const status = document.getElementById('status');
+    const login = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    function showLogin() {
+      login.hidden = false;
+      logoutBtn.hidden = true;
+      status.textContent = '';
+      count.textContent = '';
+      list.replaceChildren();
+      document.getElementById('password').focus();
+    }
+
+    document.getElementById('login-form').onsubmit = async e => {
+      e.preventDefault();
+      const errEl = document.getElementById('login-error');
+      errEl.textContent = '';
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('password').value }),
+      });
+      if (!res.ok) {
+        errEl.textContent = 'Невірний пароль.';
+        return;
+      }
+      login.hidden = true;
+      document.getElementById('login-form').reset();
+      status.textContent = 'Завантаження…';
+      load();
+    };
+
+    logoutBtn.onclick = async () => {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      showLogin();
+    };
+
+    function setCount(n) {
+      count.textContent = `Всього спогадів: ${n}`;
+    }
+
+    function card(memory) {
+      const el = document.createElement('article');
+      el.className = 'memory';
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const author = document.createElement('span');
+      author.textContent = `№${memory.id} · ${memory.author}`;
+      const date = document.createElement('span');
+      date.textContent = memory.created_at;
+      meta.append(author, date);
+
+      const title = document.createElement('h2');
+      title.textContent = memory.title;
+      const body = document.createElement('div');
+      body.className = 'body';
+      body.textContent = memory.body;
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.textContent = 'Видалити';
+      del.onclick = async () => {
+        if (!confirm(`Видалити спогад «${memory.title}»?`)) return;
+        del.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/memories/${memory.id}`, { method: 'DELETE' });
+          if (res.status === 401) {
+            showLogin();
+            return;
+          }
+          if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json().catch(() => ({}));
+          el.classList.add('removing');
+          setTimeout(() => el.remove(), 350);
+          if (typeof data.total === 'number') setCount(data.total);
+        } catch (err) {
+          del.disabled = false;
+          alert(`Не вдалося видалити: ${err.message}`);
+        }
+      };
+      actions.append(del);
+
+      el.append(meta, title, body, actions);
+      return el;
+    }
+
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/memories');
+        if (res.status === 401) {
+          showLogin();
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const memories = await res.json();
+        logoutBtn.hidden = false;
+        setCount(memories.length);
+        status.textContent = memories.length ? '' : 'Омут порожній.';
+        for (const memory of memories) list.append(card(memory));
+      } catch (err) {
+        status.textContent = `Не вдалося завантажити спогади: ${err.message}`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

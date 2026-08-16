@@ -1,0 +1,74 @@
+/* Adaptive styles: touch devices, phones, short viewports, notched screens.
+   Base (desktop) styles live in style.css — everything here only overrides. */
+
+/* ---- touch devices ---- */
+
+/* No 300ms tap delay / double-tap zoom on controls, no gray tap flash. */
+.btn, input, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No pull-to-refresh / scroll chaining over the 3D canvas. */
+html, body { overscroll-behavior: none; }
+
+/* Hover states stick on touchscreens after a tap — neutralize them. */
+@media (hover: none) {
+  .btn:hover { transform: none; }
+  .parchment .btn-ghost:hover { background: rgba(90, 66, 30, .07); }
+  /* no hover to reveal it with — keep the volume slider always visible */
+  #volume-slider { width: var(--slider-w); opacity: 1; pointer-events: auto; }
+}
+
+/* ---- notched screens (iPhone etc., needs viewport-fit=cover) ---- */
+
+#top-controls {
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  right: calc(18px + env(safe-area-inset-right, 0px));
+}
+#intro { padding-bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); }
+#toast { bottom: calc(36px + env(safe-area-inset-bottom, 0px)); }
+
+/* ---- short viewports (laptops, landscape phones) ----
+   Compress the write form so the buttons stay on screen
+   instead of hiding behind the scroll. */
+@media (max-height: 800px) {
+  .parchment { padding: 16px 28px; max-height: 94vh; }
+  .parchment h2 { font-size: 1.25rem; margin-bottom: 2px; }
+  .parchment h2::after { font-size: .85rem; margin-top: 1px; }
+  .write-hint { margin-bottom: 8px; font-size: .8rem; }
+  .parchment label { margin-bottom: 7px; }
+  .parchment textarea { height: clamp(90px, 23vh, 240px); }
+  .row { margin-top: 6px; }
+  .error { min-height: 1em; }
+}
+
+/* ---- narrow screens (phones, portrait) ---- */
+@media (max-width: 520px) {
+  .overlay { padding: 14px; gap: 14px; }
+  .parchment { padding: 18px 16px; }
+  /* exactly 16px: anything smaller makes iOS zoom into the field on focus */
+  .parchment input, .parchment textarea { font-size: 1rem; }
+  .btn { font-size: .95rem; padding: 12px 18px; } /* >= 44px touch target */
+  .row { gap: 8px; }
+  .row .btn { flex: 1 1 auto; }
+  .choice-box { padding: 20px 16px; }
+  .choice-buttons { flex-direction: column; width: 100%; }
+  .choice-buttons .btn { width: 100%; }
+  #top-controls {
+    --slider-w: 64px;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    gap: 6px;
+  }
+  .memory-paper::after { width: 34px; height: 34px; right: 16px; bottom: 14px; }
+}
+
+/* ---- tiny landscape (phone rotated) ----
+   Drop the decorations, keep the form usable. */
+@media (max-height: 480px) {
+  .parchment { max-height: 96vh; padding: 14px 20px; }
+  .write-hint { display: none; }
+  .parchment h2::after { display: none; }
+  .parchment textarea { height: clamp(60px, 18vh, 120px); }
+}

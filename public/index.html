@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Омут пам'яті</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="loader">
+    <div class="goblet">
+      <div class="goblet-bowl">
+        <div id="loader-fill"></div>
+      </div>
+      <div class="goblet-stem"></div>
+      <div class="goblet-base"></div>
+    </div>
+    <h2 data-i18n="app.title">Омут пам'яті</h2>
+    <p id="loader-hint" data-i18n="loader.hint">Збираємо спогади…</p>
+  </div>
+
+  <div id="vignette"></div>
+  <div id="flash"></div>
+
+  <div id="intro" class="overlay visible">
+    <h1 data-i18n="app.title">Омут пам'яті</h1>
+    <p class="subtitle" data-i18n-html="intro.subtitle">Кам'яна чаша, що зберігає чужі спогади.<br>
+       Підійди ближче — і вирішуй: залишити свій чи зазирнути в чужий.</p>
+    <button id="approach-btn" class="btn btn-gold" data-i18n="btn.approach">Підійти до Омуту</button>
+  </div>
+
+  <div id="choice" class="overlay">
+    <div class="choice-box">
+      <p class="choice-hint" data-i18n="choice.hint">Срібляста поверхня тихо вирує…</p>
+      <div class="choice-buttons">
+        <button id="write-btn" class="btn btn-gold" data-i18n="btn.write">🪶 Залишити свій спогад</button>
+        <button id="dive-btn" class="btn btn-blue" data-i18n="btn.dive">🌀 Пірнути в чужий спогад</button>
+      </div>
+      <button id="back-btn" class="btn btn-ghost" data-i18n="btn.back">Відійти</button>
+    </div>
+  </div>
+
+  <div id="write-modal" class="overlay">
+    <form id="write-form" class="parchment">
+      <h2 data-i18n="write.title">Новий спогад</h2>
+      <p class="write-hint" data-i18n="write.hint">Чорнило зачароване — приймає лише щирі спогади</p>
+      <label><span data-i18n="write.name">Твоє ім'я</span> <span class="muted" data-i18n="write.nameNote">(можна лишити порожнім)</span>
+        <input id="w-author" type="text" maxlength="60" data-i18n-ph="author.anon" placeholder="Невідомий чарівник">
+      </label>
+      <label><span data-i18n="write.titleLabel">Назва спогаду</span>
+        <input id="w-title" type="text" maxlength="120" required data-i18n-ph="write.titlePh" placeholder="Про що цей спогад?">
+      </label>
+      <label><span data-i18n="write.body">Сам спогад</span>
+        <textarea id="w-body" rows="7" maxlength="5000" required data-i18n-ph="write.bodyPh"
+          placeholder="Опиши його так, ніби витягуєш сріблясту нитку з думок…"></textarea>
+      </label>
+      <p id="write-error" class="error"></p>
+      <div class="row">
+        <button type="submit" class="btn btn-gold" data-i18n="btn.submit">Опустити у чашу</button>
+        <button type="button" id="write-cancel" class="btn btn-ghost" data-i18n="btn.cancel">Передумав</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="memory-view" class="overlay">
+    <div class="parchment memory-paper">
+      <p class="memory-meta"><span data-i18n="memory.by">Спогад</span> <span id="m-author"></span> · <span id="m-date"></span></p>
+      <h2 id="m-title"></h2>
+      <div id="m-body" class="memory-body"></div>
+      <div class="row">
+        <button id="another-btn" class="btn btn-blue" data-i18n="btn.another">Інший спогад</button>
+        <button id="surface-btn" class="btn btn-gold" data-i18n="btn.surface">Виринути</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="top-controls">
+    <div id="sound-ctrl">
+      <input id="volume-slider" type="range" min="0" max="100" data-i18n-title="sound.volume" title="Гучність">
+      <button id="mute-btn" class="btn btn-ghost" data-i18n-title="sound.title" title="Звук">🔊</button>
+    </div>
+    <button id="lang-btn" class="btn btn-ghost" data-i18n="lang.toggle" data-i18n-title="lang.title">EN</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
