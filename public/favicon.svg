@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Sorting Hat: worn leather cone with a drooping curled tip, face folds and a wide brim -->
+  <ellipse cx="32" cy="52" rx="27" ry="9" fill="#3a2617"/>
+  <ellipse cx="32" cy="50.5" rx="27" ry="9" fill="#5a4028"/>
+  <path d="M15 51
+           C 17 37, 22 22, 30 10
+           C 32.5 5.5, 38.5 1.5, 43.5 4.5
+           C 48.5 7.5, 46 14, 40.5 12.5
+           C 42 17, 44 25, 45.8 33
+           C 47.2 39.5, 48.6 46, 49.5 51
+           C 44 54.5, 21 54.5, 15 51 Z"
+        fill="#6b4d30"/>
+  <path d="M15 51
+           C 17 37, 22 22, 30 10
+           C 27 22, 24.5 36, 24 51 Z"
+        fill="#7d5c3a" opacity="0.55"/>
+  <path d="M40.5 12.5 C 42 17, 44 25, 45.8 33 C 47.2 39.5, 48.6 46, 49.5 51 C 46 52.8, 42 53.6, 38 53.8 C 39.5 40, 40 25, 40.5 12.5 Z"
+        fill="#4a3421" opacity="0.6"/>
+  <!-- eye creases -->
+  <path d="M24.5 33 Q 28 36 31.5 34" stroke="#2e1d10" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <path d="M35.5 34 Q 39 36.5 42.5 34.5" stroke="#2e1d10" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- mouth fold -->
+  <path d="M23 43 Q 32 49 44 43.5" stroke="#2e1d10" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M23 43 Q 32 49 44 43.5" stroke="#1c1006" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <!-- brim front highlight -->
+  <path d="M6.5 51 A 25.5 8 0 0 0 57.5 51" stroke="#8a6a44" stroke-width="1.6" fill="none" opacity="0.8"/>
+</svg>
