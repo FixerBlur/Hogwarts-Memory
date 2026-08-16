@@ -78,8 +78,8 @@ const DICT = {
   },
 };
 
-let lang = localStorage.getItem('pensieveLang');
-if (!DICT[lang]) lang = 'uk';
+const storedLang = localStorage.getItem('pensieveLang');
+let lang = DICT[storedLang] ? storedLang : 'uk';
 
 export function t(key, fallback = key) {
   return DICT[lang][key] ?? fallback;
@@ -104,6 +104,23 @@ export function toggle() {
   applyDom();
 }
 
+/* Visitors from Ukraine get Ukrainian, everyone else English — but only
+   until they pick a language themselves: an explicit choice is persisted
+   and always wins over geo detection. */
+async function detectLanguage() {
+  try {
+    const res = await fetch('/api/geo');
+    const { country } = await res.json();
+    if (country && country !== 'UA' && lang !== 'en') {
+      lang = 'en';
+      applyDom();
+    }
+  } catch {
+    // offline / local run without the API — keep the default
+  }
+}
+
 export function init() {
   applyDom();
+  if (!DICT[storedLang]) detectLanguage();
 }

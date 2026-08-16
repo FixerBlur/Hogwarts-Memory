@@ -59,6 +59,12 @@ def get_count():
     return jsonify(total=db.count_memories())
 
 
+@api.get("/geo")
+def geo():
+    """Visitor's country code, courtesy of Vercel's edge (null locally)."""
+    return jsonify(country=request.headers.get("X-Vercel-IP-Country"))
+
+
 def require_admin(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
