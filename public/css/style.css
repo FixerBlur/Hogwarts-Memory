@@ -304,3 +304,30 @@ html, body {
   z-index: 20; text-align: center;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* enchanted scrollbars: a polished gold-and-wood thumb in a parchment groove */
+.parchment::-webkit-scrollbar,
+.parchment textarea::-webkit-scrollbar { width: 10px; }
+.parchment::-webkit-scrollbar-track,
+.parchment textarea::-webkit-scrollbar-track {
+  background: rgba(122, 90, 34, .14);
+  border-radius: 8px;
+  margin: 6px 0;
+}
+.parchment::-webkit-scrollbar-thumb,
+.parchment textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d8b45a, #a9822f 55%, #8a6a44);
+  border-radius: 8px;
+  border: 2px solid rgba(240, 227, 192, .85);
+}
+.parchment::-webkit-scrollbar-thumb:hover,
+.parchment textarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f3d488, #c9a34d 55%, #a9822f);
+}
+/* Firefox (setting scrollbar-color in Chrome would disable the fancy styling above) */
+@supports (-moz-appearance: none) {
+  .parchment, .parchment textarea {
+    scrollbar-width: thin;
+    scrollbar-color: #a9822f rgba(122, 90, 34, .15);
+  }
+}
