@@ -285,15 +285,32 @@ function switchAmbient() {
   scheduleBells();
 }
 
+/* Mobile browsers ignore preload="auto": media only starts downloading
+   after a user gesture, so canplay never fires and the synth ambient plays
+   forever. Kick the current scene's track inside a gesture — playback (or
+   at least loading) begins, canplay fires, and engageMusic swaps it in. */
+function kickTrack() {
+  const track = TRACKS[scene];
+  if (!track || track.ready || !track.el.paused) return;
+  if (muted) {
+    track.el.load();
+    return;
+  }
+  track.el.volume = track.level * volume;
+  track.el.play().catch(() => track.el.load());
+}
+
 export function unlock() {
   ensureContext();
   if (!ambient) switchAmbient();
+  kickTrack();
 }
 
 export function setScene(name) {
   if (scene === name) return;
   scene = name;
   if (ctx) switchAmbient();
+  kickTrack();
 }
 
 export function setMuted(value) {
