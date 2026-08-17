@@ -6,6 +6,7 @@ from time import sleep
 from flask import Blueprint, current_app, jsonify, request, session
 
 from . import db
+from .translate import translate
 
 api = Blueprint("api", __name__)
 
@@ -45,13 +46,31 @@ def create_memory():
     return jsonify(id=memory_id, total=db.count_memories()), 201
 
 
+def localized(row, lang: str) -> dict:
+    """The memory as stored, or its English translation for English UI.
+    Each memory is translated once and cached in the translations table."""
+    payload = serialize(row)
+    if lang != "en":
+        return payload
+    cached = db.get_translation(row["id"], "en")
+    if cached is None:
+        result = translate([row["title"], row["body"]], "EN-GB")
+        if result is None:  # translation service down — serve the original
+            return payload
+        db.save_translation(row["id"], "en", result[0], result[1])
+        cached = {"title": result[0], "body": result[1]}
+    payload.update(title=cached["title"], body=cached["body"], translated=True)
+    return payload
+
+
 @api.get("/memories/random")
 def get_random_memory():
     exclude = request.args.get("exclude", type=int)
+    lang = request.args.get("lang", "uk")
     row = db.random_memory(exclude_id=exclude)
     if row is None:
         return jsonify(error="Омут порожній — ще ніхто не залишив спогадів.", code="empty"), 404
-    return jsonify(serialize(row))
+    return jsonify(localized(row, lang))
 
 
 @api.get("/memories/count")

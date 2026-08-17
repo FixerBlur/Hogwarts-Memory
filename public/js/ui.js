@@ -169,7 +169,8 @@ export function flash(on) {
 
 export function showMemory(memory) {
   $('m-author').textContent = memory.author;
-  $('m-date').textContent = (memory.created_at || '').slice(0, 10);
+  $('m-date').textContent = (memory.created_at || '').slice(0, 10)
+    + (memory.translated ? ` · ${t('memory.translated')}` : '');
   $('m-title').textContent = memory.title;
   $('m-body').textContent = memory.body;
   showOverlay('memory-view');

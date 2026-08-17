@@ -1,4 +1,4 @@
-import { t } from './i18n.js';
+import { t, current } from './i18n.js';
 
 async function request(url, options) {
   const res = await fetch(url, options);
@@ -21,6 +21,7 @@ export function addMemory({ author, title, body }) {
 }
 
 export function randomMemory(excludeId) {
-  const q = excludeId ? `?exclude=${excludeId}` : '';
-  return request(`/api/memories/random${q}`);
+  const params = new URLSearchParams({ lang: current() });
+  if (excludeId) params.set('exclude', excludeId);
+  return request(`/api/memories/random?${params}`);
 }

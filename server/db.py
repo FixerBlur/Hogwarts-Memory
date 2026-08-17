@@ -18,7 +18,8 @@ if DATABASE_URL:
 # placeholder style differs between the two drivers
 _P = "%s" if DATABASE_URL else "?"
 
-SCHEMA_SQLITE = """
+SCHEMA_SQLITE = [
+    """
 CREATE TABLE IF NOT EXISTS memories (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     author     TEXT NOT NULL DEFAULT 'Невідомий чарівник',
@@ -26,9 +27,20 @@ CREATE TABLE IF NOT EXISTS memories (
     body       TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-"""
+""",
+    """
+CREATE TABLE IF NOT EXISTS translations (
+    memory_id INTEGER NOT NULL,
+    lang      TEXT NOT NULL,
+    title     TEXT NOT NULL,
+    body      TEXT NOT NULL,
+    PRIMARY KEY (memory_id, lang)
+);
+""",
+]
 
-SCHEMA_PG = """
+SCHEMA_PG = [
+    """
 CREATE TABLE IF NOT EXISTS memories (
     id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     author     TEXT NOT NULL DEFAULT 'Невідомий чарівник',
@@ -36,7 +48,17 @@ CREATE TABLE IF NOT EXISTS memories (
     body       TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-"""
+""",
+    """
+CREATE TABLE IF NOT EXISTS translations (
+    memory_id BIGINT NOT NULL,
+    lang      TEXT NOT NULL,
+    title     TEXT NOT NULL,
+    body      TEXT NOT NULL,
+    PRIMARY KEY (memory_id, lang)
+);
+""",
+]
 
 
 def get_db():
@@ -61,12 +83,14 @@ def init_app(app: Flask):
     app.teardown_appcontext(close_db)
     if DATABASE_URL:
         with psycopg.connect(DATABASE_URL) as conn:
-            conn.execute(SCHEMA_PG)
+            for statement in SCHEMA_PG:
+                conn.execute(statement)
             conn.commit()
     else:
         with app.app_context():
             conn = sqlite3.connect(app.config["DATABASE"])
-            conn.executescript(SCHEMA_SQLITE)
+            for statement in SCHEMA_SQLITE:
+                conn.execute(statement)
             conn.commit()
             conn.close()
 
@@ -115,6 +139,24 @@ def list_memories():
 
 def delete_memory(memory_id: int) -> bool:
     conn = get_db()
+    conn.execute(f"DELETE FROM translations WHERE memory_id = {_P}", (memory_id,))
     cur = conn.execute(f"DELETE FROM memories WHERE id = {_P}", (memory_id,))
     conn.commit()
     return cur.rowcount > 0
+
+
+def get_translation(memory_id: int, lang: str):
+    return get_db().execute(
+        f"SELECT title, body FROM translations WHERE memory_id = {_P} AND lang = {_P}",
+        (memory_id, lang),
+    ).fetchone()
+
+
+def save_translation(memory_id: int, lang: str, title: str, body: str):
+    conn = get_db()
+    conn.execute(
+        f"INSERT INTO translations (memory_id, lang, title, body) "
+        f"VALUES ({_P}, {_P}, {_P}, {_P}) ON CONFLICT DO NOTHING",
+        (memory_id, lang, title, body),
+    )
+    conn.commit()
