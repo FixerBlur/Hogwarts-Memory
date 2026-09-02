@@ -1,6 +1,8 @@
 venv
 data
+docs
 __pycache__
 *.pyc
+.claude
 start.bat
 start.sh

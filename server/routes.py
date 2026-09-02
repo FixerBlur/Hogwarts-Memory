@@ -1,7 +1,8 @@
 """JSON API for memories."""
 import hmac
+import threading
+import time
 from functools import wraps
-from time import sleep
 
 from flask import Blueprint, current_app, jsonify, request, session
 
@@ -15,6 +16,37 @@ MAX_TITLE = 120
 MAX_BODY = 5000
 
 DEFAULT_AUTHOR = "Невідомий чарівник"
+
+# Per-IP cap on new memories. In-process only, so on serverless it holds
+# per warm instance; still enough to stop a naive flood.
+RATE_LIMIT = 5        # memories
+RATE_WINDOW = 10 * 60  # seconds
+_recent: dict[str, list[float]] = {}
+_recent_lock = threading.Lock()
+
+
+def client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    return forwarded.split(",")[0].strip() or request.remote_addr or "?"
+
+
+def _fresh(stamps: list[float], now: float) -> list[float]:
+    return [t for t in stamps if now - t < RATE_WINDOW]
+
+
+def rate_limited(ip: str) -> bool:
+    now = time.time()
+    with _recent_lock:
+        stamps = _recent[ip] = _fresh(_recent.get(ip, []), now)
+        if len(_recent) > 2000:  # keep the table small
+            for key in [k for k, v in _recent.items() if not _fresh(v, now)]:
+                del _recent[key]
+        return len(stamps) >= RATE_LIMIT
+
+
+def record_write(ip: str):
+    with _recent_lock:
+        _recent.setdefault(ip, []).append(time.time())
 
 
 def serialize(row) -> dict:
@@ -41,8 +73,12 @@ def create_memory():
         return jsonify(error="Потрібні і назва, і сам спогад.", code="missing_fields"), 400
     if len(author) > MAX_AUTHOR or len(title) > MAX_TITLE or len(body) > MAX_BODY:
         return jsonify(error="Спогад задовгий для чаші.", code="too_long"), 400
+    ip = client_ip()
+    if rate_limited(ip):
+        return jsonify(error="Забагато спогадів поспіль — зачекай трохи.", code="rate_limited"), 429
 
     memory_id = db.add_memory(author, title, body)
+    record_write(ip)
     return jsonify(id=memory_id, total=db.count_memories()), 201
 
 
@@ -98,7 +134,7 @@ def admin_login():
     data = request.get_json(silent=True) or {}
     supplied = str(data.get("password") or "")
     if not hmac.compare_digest(supplied, current_app.config["ADMIN_PASSWORD"]):
-        sleep(0.5)  # slow down brute force
+        time.sleep(0.5)  # slow down brute force
         return jsonify(error="Невірний пароль.", code="bad_password"), 401
     session["admin"] = True
     return jsonify(ok=True)

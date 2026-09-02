@@ -1,16 +1,35 @@
-# Омут пам'яті (Pensieve)
+# Pensieve
 
-3D-вебзастосунок за мотивами «Гаррі Поттера». У залі Гоґвортсу стоїть
-кам'яна чаша з рунами — Омут пам'яті. Відвідувач може залишити власний
-спогад (він опускається в чашу сяючою ниткою) або пірнути в чашу:
-камера пролітає крізь вихор у простір спогадів, де серед туману кружляють
-картки-історії, і випадкова з них розгортається текстом зі спільної бази.
+![The Pensieve hall](docs/screenshot.jpg)
 
-Графіка: Three.js, PBR-текстури (Poly Haven / ambientCG, CC0),
-HDRI-освітлення, м'які тіні, bloom. Всі залежності та асети локальні —
-застосунок працює без доступу до інтернету.
+A 3D web app inspired by the Pensieve from Harry Potter. Visitors approach a
+stone basin in a Hogwarts hall and either leave a memory of their own or dive
+in to read a random memory left by someone else.
 
-## Запуск
+Built with Three.js (PBR textures, HDRI lighting, soft shadows, bloom) on the
+front end and a small Flask API on the back end. All front-end dependencies and
+assets are served locally.
+
+## Features
+
+- Three scenes: the hall with the basin, a vortex transition, and the memory
+  realm where a card unfolds into the story.
+- Shared memory pool stored in SQLite locally or Postgres in production.
+- Ukrainian and English UI. Visitors outside Ukraine get English by default;
+  a manual choice is remembered.
+- Optional machine translation of memories into English, cached per memory.
+- Password-protected admin panel for reviewing and deleting memories.
+- Per-IP rate limit on submissions.
+- Synthesized WebAudio ambience and sound effects; optional streamed music
+  tracks per scene (see `TRACKS` in `public/js/core/audio.js`).
+- Touch and small-screen support with a reduced pixel-ratio cap on phones.
+
+## Requirements
+
+- Python 3.10+
+- A browser with WebGL 2 and ES module support
+
+## Run locally
 
 Linux / macOS:
 
@@ -18,93 +37,109 @@ Linux / macOS:
 ./start.sh
 ```
 
-Windows — подвійний клік по `start.bat` або з термінала:
+Windows:
 
 ```bash
 start.bat
 ```
 
-Або вручну:
+Both scripts create `venv/`, install dependencies, seed an empty database and
+start the server at http://localhost:8000.
+
+Manual setup:
 
 ```bash
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
-./venv/bin/python seed.py    # стартові спогади для порожньої бази
-./venv/bin/python app.py     # http://localhost:8000
+./venv/bin/python seed.py    # 25 starter memories, only if the database is empty
+./venv/bin/python app.py
 ```
 
-## Структура
+`seed.py --merge` adds the starter memories that are missing from a non-empty
+database.
+
+## Project layout
 
 ```
-app.py                        точка входу (Flask, порт 8000)
-admin.html                    адмінка (роздається лише за /adminer)
-seed.py                       наповнення порожньої бази (25 історій)
-start.sh / start.bat          запуск на POSIX / Windows
+app.py                  entry point (Flask, port 8000)
+api/index.py            Vercel serverless entry point (same app as WSGI)
+admin.html              admin panel, served only at /adminer
+seed.py                 starter memories
 server/
-  __init__.py                 фабрика застосунку, секрети, маршрут /adminer
-  db.py                       SQLite-сховище (data/pensieve.db)
-  routes.py                   JSON API + захищені admin-ендпоінти
-data/                         база, пароль адмінки, ключ сесій (не публікувати!)
+  __init__.py           app factory, secrets, /adminer route
+  db.py                 storage: SQLite by default, Postgres when DATABASE_URL is set
+  routes.py             JSON API, rate limit, admin endpoints
+  translate.py          machine translation helper
 public/
-  index.html                  розмітка та оверлеї інтерфейсу
-  css/
-    style.css                 базові (десктопні) стилі
-    responsive.css            телефони, тач, короткі екрани, safe-area
+  index.html            markup and UI overlays
+  css/                  base styles and responsive overrides
   js/
-    main.js                   стани, камера, хореографії, зв'язок сцен з UI
-    api.js                    клієнт API (локалізація помилок за кодами)
-    ui.js                     DOM-оверлеї, лоадер, перо-курсор у формі
-    i18n.js                   словник uk/en, data-i18n прив'язки
-    core/
-      tween.js                твіни, easing, rand
-      postprocessing.js       композер із bloom
-      fx.js                   спільні шейдери, частинки, промені, канвас-текстури
-      audio.js                WebAudio: треки сцен, ембієнти, sfx, гучність
-    scenes/
-      hall/                   зала: кімната, чаша, реквізит, сніч, анімація палички
-      realm/                  простір спогадів і картки-історії
-      vortex/                 тунель-переліт між сценами
-  assets/                     текстури, HDRI, музика (assets/audio), референс
-  vendor/                     Three.js r160, постпроцесинг, RGBELoader
+    main.js             app state, camera choreography, scene switching
+    api.js              API client
+    ui.js               DOM overlays, loader, quill cursor
+    i18n.js             uk/en dictionary and DOM bindings
+    core/               tweens, post-processing, shared FX, WebAudio
+    scenes/hall/        room, basin, props, snitch, wand deposit animation
+    scenes/realm/       memory realm and story cards
+    scenes/vortex/      tunnel between scenes
+  assets/               textures, HDRI
+  vendor/               Three.js r160, post-processing passes, RGBELoader
+docs/                   screenshot for this README
+data/                   local database and secrets (git-ignored)
 ```
 
 ## API
 
-| Метод  | Шлях                          | Опис                                  |
-|--------|-------------------------------|---------------------------------------|
-| POST   | `/api/memories`               | `{author?, title, body}` — новий запис |
-| GET    | `/api/memories/random?exclude=<id>` | випадковий спогад, крім `exclude` |
-| GET    | `/api/memories/count`         | кількість спогадів                     |
-| GET    | `/api/admin/memories`         | всі спогади (для адмінки)              |
-| DELETE | `/api/admin/memories/<id>`    | видалити спогад                        |
+| Method | Path                               | Description                                  |
+|--------|------------------------------------|----------------------------------------------|
+| POST   | `/api/memories`                    | `{author?, title, body}`; returns `{id, total}` |
+| GET    | `/api/memories/random?exclude=<id>&lang=<uk\|en>` | random memory, optionally excluding one |
+| GET    | `/api/memories/count`              | `{total}`                                    |
+| GET    | `/api/geo`                         | visitor country code from Vercel headers     |
+| POST   | `/api/admin/login`                 | `{password}`; starts an admin session        |
+| POST   | `/api/admin/logout`                | ends the admin session                       |
+| GET    | `/api/admin/memories`              | all memories (admin)                         |
+| DELETE | `/api/admin/memories/<id>`         | delete a memory (admin)                      |
 
-Адмінка: `http://localhost:8000/adminer` — список усіх спогадів із видаленням.
-Захищена паролем: локально він генерується при першому запуску і лежить у
-`data/admin_password.txt` (можна замінити на свій — перезапусти сервер).
-Сесію підписує ключ із `data/secret_key.txt`. Тека `data/` в `.gitignore`.
+Limits: author 60, title 120, body 5000 characters; 5 submissions per IP per
+10 minutes. Errors are JSON with a `code` field that the client localizes.
 
-## Деплой на Vercel
+## Admin panel
 
-Локально застосунок працює на SQLite і файлах у `data/`; на Vercel файлова
-система read-only, тож база і секрети живуть зовні:
+`/adminer` lists all memories with a delete button. Locally the password is
+generated on first run and stored in `data/admin_password.txt`; replace it
+with your own and restart. Sessions are signed with `data/secret_key.txt`.
 
-1. Запуш репозиторій на GitHub та імпортуй проєкт у Vercel
-   (Framework Preset: **Other** — статика роздається з `public/`,
-   Flask загорнутий у serverless-функцію `api/index.py`).
-2. У вкладці **Storage** підключи Postgres (Neon з Marketplace, безкоштовний
-   тариф) — Vercel сам додасть змінну `DATABASE_URL`.
-3. У **Settings → Environment Variables** додай:
-   - `ADMIN_PASSWORD` — пароль адмінки;
-   - `SECRET_KEY` — довільний довгий випадковий рядок (підпис сесій);
-   - `DEEPL_API_KEY` *(опційно)* — ключ DeepL API Free
-     (реєстрація на deepl.com → API → Free): вмикає автопереклад спогадів
-     англійською для іноземних відвідувачів. Переклади кешуються в базі,
-     тож кожен спогад витрачає ліміт лише раз. Без ключа спогади просто
-     показуються мовою оригіналу.
-4. Наповни продакшен-базу стартовими історіями зі свого компʼютера:
+## Translation
+
+When the UI language is English, `/api/memories/random?lang=en` returns the
+memory translated into English. Translation uses Google Translate's public
+web endpoint without an API key; it is unofficial and may stop working at any
+time. Each memory is translated once and cached in the `translations` table.
+If translation fails or exceeds its time budget, the original text is served.
+
+## Deploy to Vercel
+
+The filesystem on Vercel is read-only, so the database and secrets live
+outside the repo.
+
+1. Import the repository into Vercel with the framework preset set to
+   **Other**. Static files are served from `public/`; `/api/*` and `/adminer`
+   are rewritten to the Flask function in `api/index.py` (see `vercel.json`).
+2. Add a Postgres database from **Storage** (for example Neon). Vercel sets
+   `DATABASE_URL` automatically.
+3. Add environment variables:
+   - `ADMIN_PASSWORD`: admin panel password
+   - `SECRET_KEY`: long random string used to sign sessions
+4. Seed the production database from your machine:
 
    ```bash
-   set DATABASE_URL=<рядок підключення з Vercel> && venv\Scripts\python seed.py
+   DATABASE_URL=<connection string> ./venv/bin/python seed.py
    ```
 
-`server/db.py` сам обирає бекенд: є `DATABASE_URL` — Postgres, немає — SQLite.
+`server/db.py` picks the backend at startup: Postgres when `DATABASE_URL` is
+set, SQLite otherwise.
+
+## Credits
+
+Textures and HDRI from Poly Haven and ambientCG (CC0). Three.js r160 (MIT).

@@ -9,23 +9,17 @@ let scene = 'hall';
 let ambient = null;
 let bellTimer = null;
 
-/* Scene soundtracks. Streamed via <audio> elements (decoded multi-minute
-   buffers would eat tens of MB of RAM) and routed through the master bus,
-   so the mute button and scene crossfades apply to them too. Elements are
-   created at module load so the downloads start right away: by the user's
-   first click a track is ready, and play() can run inside that same
-   gesture — which autoplay policies always allow. */
-const TRACKS = {
-  hall: {
-    url: 'assets/audio/Harry-Potter-Theme-Music-_-Copyright-Free-_Hedwig_s-Theme_.mp3',
-    level: 0.15,
-  },
-  vortex: {
-    url: "assets/audio/Lily_s-Theme-But-It_s-Even-Darker-_Slowed-Down-To-Perfection-Reverb_-Alexandre-Desplat.mp3",
-    level: 0.15,
-  },
-};
-TRACKS.realm = TRACKS.vortex; // one track carries the whole dive, no restart
+/* Scene soundtracks, keyed by scene (hall | vortex | realm). Empty by
+   default: the synthesized ambient below carries every scene. To use real
+   music drop files into public/assets/audio and list them here, e.g.
+     hall: { url: 'assets/audio/hall.mp3', level: 0.15 }
+   Tracks are streamed via <audio> elements (decoded multi-minute buffers
+   would eat tens of MB of RAM) and routed through the master bus, so the
+   mute button and scene crossfades apply to them too. Elements are created
+   at module load so the downloads start right away: by the user's first
+   click a track is ready, and play() can run inside that same gesture,
+   which autoplay policies always allow. */
+const TRACKS = {};
 
 for (const track of new Set(Object.values(TRACKS))) {
   track.el = new Audio(track.url);
